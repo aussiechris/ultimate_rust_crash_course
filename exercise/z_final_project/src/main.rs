@@ -44,7 +44,11 @@ struct Args {
 #[derive(Subcommand)]
 enum Commands {
     /// Blur the image
-    Blur,
+    Blur {
+        /// amount to blur by
+        #[arg(value_name = "BLUR_AMOUNT")]
+        blur_amount: f32,
+    },
     /// Make the image brighter
     Brighten,
     /// Crop the image
@@ -55,88 +59,26 @@ enum Commands {
     Invert,
     /// Remove colour from the image
     Grayscale,
+    /// Generate a fractal
+    Fractal,
 }
 fn main() {
-    // 1. First, you need to implement some basic command-line argument handling
-    // so you can make your program do different things.  Here's a little bit
-    // to get you started doing manual parsing.
-    //
-    // Challenge: If you're feeling really ambitious, you could delete this code
-    // and use the "clap" library instead: https://docs.rs/clap/2.32.0/clap/
     let args = Args::parse();
-    // if let Some(blur) = args.blur.as_deref() {
-    //     println!("We're gonna blur the file {}", blur);
-    // }
 
-    // if args.is_empty() {
-    //     print_usage_and_exit();
-    // }
-    // let subcommand = args.remove(0);
-    // match subcommand.as_str() {
-    //     // EXAMPLE FOR CONVERSION OPERATIONS
-    //     "blur" => {
-    //         if args.len() != 2 {
-    //             print_usage_and_exit();
-    //         }
-    //         let infile = args.remove(0);
-    //         let outfile = args.remove(0);
-    //         // **OPTION**
-    //         // Improve the blur implementation -- see the blur() function below
-    //         blur(infile, outfile);
-    //     }
-
-    //     // **OPTION**
-    //     // Brighten -- see the brighten() function below
-
-    //     // **OPTION**
-    //     // Crop -- see the crop() function below
-
-    //     // **OPTION**
-    //     // Rotate -- see the rotate() function below
-
-    //     // **OPTION**
-    //     // Invert -- see the invert() function below
-
-    //     // **OPTION**
-    //     // Grayscale -- see the grayscale() function below
-
-    //     // A VERY DIFFERENT EXAMPLE...a really fun one. :-)
-    //     "fractal" => {
-    //         if args.len() != 1 {
-    //             print_usage_and_exit();
-    //         }
-    //         let outfile = args.remove(0);
-    //         fractal(outfile);
-    //     }
-
-    //     // **OPTION**
-    //     // Generate -- see the generate() function below -- this should be sort of like "fractal()"!
-
-    //     // For everything else...
-    //     _ => {
-    //         print_usage_and_exit();
-    //     }
-    // }
+    match args.command {
+        Commands::Blur { blur_amount } => blur(args.infile, args.outfile, blur_amount),
+        Commands::Brighten => brighten(args.infile, args.outfile),
+        Commands::Crop => crop(args.infile, args.outfile),
+        Commands::Rotate => rotate(args.infile, args.outfile),
+        Commands::Invert => invert(args.infile, args.outfile),
+        Commands::Grayscale => grayscale(args.infile, args.outfile),
+        Commands::Fractal => fractal(args.outfile),
+    }
 }
 
-fn print_usage_and_exit() {
-    println!("USAGE (when in doubt, use a .png extension on your filenames)");
-    println!("blur INFILE OUTFILE");
-    println!("fractal OUTFILE");
-    // **OPTION**
-    // Print useful information about what subcommands and arguments you can use
-    // println!("...");
-    std::process::exit(-1);
-}
-
-fn blur(infile: String, outfile: String) {
-    // Here's how you open an existing image file
+fn blur(infile: String, outfile: String, blur_amount: f32) {
     let img = image::open(infile).expect("Failed to open INFILE.");
-    // **OPTION**
-    // Parse the blur amount (an f32) from the command-line and pass it through
-    // to this function, instead of hard-coding it to 2.0.
-    let img2 = img.blur(2.0);
-    // Here's how you save an image to a file.
+    let img2 = img.blur(blur_amount);
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 

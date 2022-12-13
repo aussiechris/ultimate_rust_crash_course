@@ -56,7 +56,20 @@ enum Commands {
         brighten_amount: i32,
     },
     /// Crop the image
-    Crop,
+    Crop {
+        /// x position to crop image from
+        #[arg(value_name = "CROP_X")]
+        x: u32,
+        /// y position to crop image from
+        #[arg(value_name = "CROP_Y")]
+        y: u32,
+        /// width to crop image to
+        #[arg(value_name = "CROP_WIDTH")]
+        width: u32,
+        /// height to crop image to
+        #[arg(value_name = "CROP_HEIGHT")]
+        height: u32,
+    },
     /// Rotate the image
     Rotate,
     /// Invert the image
@@ -74,7 +87,12 @@ fn main() {
         Commands::Brighten { brighten_amount } => {
             brighten(args.infile, args.outfile, brighten_amount)
         }
-        Commands::Crop => crop(args.infile, args.outfile),
+        Commands::Crop {
+            x,
+            y,
+            width,
+            height,
+        } => crop(args.infile, args.outfile, x, y, width, height),
         Commands::Rotate => rotate(args.infile, args.outfile),
         Commands::Invert => invert(args.infile, args.outfile),
         Commands::Grayscale => grayscale(args.infile, args.outfile),
@@ -94,16 +112,10 @@ fn brighten(infile: String, outfile: String, brighten_amount: i32) {
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
-fn crop(infile: String, outfile: String) {
-    // See blur() for an example of how to open an image.
-
-    // .crop() takes four arguments: x: u32, y: u32, width: u32, height: u32
-    // You may hard-code them, if you like.  It returns a new image.
-
-    // Challenge: parse the four values from the command-line and pass them
-    // through to this function.
-
-    // See blur() for an example of how to save the image.
+fn crop(infile: String, outfile: String, x: u32, y: u32, width: u32, height: u32) {
+    let mut img = image::open(infile).expect("Failed to open INFILE.");
+    let img2 = img.crop(x, y, width, height);
+    img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
 fn rotate(infile: String, outfile: String) {

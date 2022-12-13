@@ -50,7 +50,11 @@ enum Commands {
         blur_amount: f32,
     },
     /// Make the image brighter
-    Brighten,
+    Brighten {
+        /// amount to brighten by
+        #[arg(value_name = "BRIGHTEN_AMOUNT")]
+        brighten_amount: i32,
+    },
     /// Crop the image
     Crop,
     /// Rotate the image
@@ -67,7 +71,9 @@ fn main() {
 
     match args.command {
         Commands::Blur { blur_amount } => blur(args.infile, args.outfile, blur_amount),
-        Commands::Brighten => brighten(args.infile, args.outfile),
+        Commands::Brighten { brighten_amount } => {
+            brighten(args.infile, args.outfile, brighten_amount)
+        }
         Commands::Crop => crop(args.infile, args.outfile),
         Commands::Rotate => rotate(args.infile, args.outfile),
         Commands::Invert => invert(args.infile, args.outfile),
@@ -82,14 +88,10 @@ fn blur(infile: String, outfile: String, blur_amount: f32) {
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
-fn brighten(infile: String, outfile: String) {
-    // See blur() for an example of how to open / save an image.
-
-    // .brighten() takes one argument, an i32.  Positive numbers brighten the
-    // image. Negative numbers darken it.  It returns a new image.
-
-    // Challenge: parse the brightness amount from the command-line and pass it
-    // through to this function.
+fn brighten(infile: String, outfile: String, brighten_amount: i32) {
+    let img = image::open(infile).expect("Failed to open INFILE.");
+    let img2 = img.brighten(brighten_amount);
+    img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
 fn crop(infile: String, outfile: String) {

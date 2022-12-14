@@ -131,6 +131,9 @@ fn rotate(infile: String, outfile: String) {
     // through to this function to select which method to call.
 
     // See blur() for an example of how to save the image.
+    let img = image::open(infile).expect("Failed to open INFILE.");
+    let img2 = img.rotate90();
+    img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
 fn invert(infile: String, outfile: String) {

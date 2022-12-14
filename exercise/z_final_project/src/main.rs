@@ -79,6 +79,7 @@ enum Commands {
     /// Generate a fractal
     Fractal,
 }
+
 fn main() {
     let args = Args::parse();
 
@@ -119,8 +120,6 @@ fn crop(infile: String, outfile: String, x: u32, y: u32, width: u32, height: u32
 }
 
 fn rotate(infile: String, outfile: String) {
-    // See blur() for an example of how to open an image.
-
     // There are 3 rotate functions to choose from (all clockwise):
     //   .rotate90()
     //   .rotate180()
@@ -130,7 +129,7 @@ fn rotate(infile: String, outfile: String) {
     // Challenge: parse the rotation amount from the command-line, pass it
     // through to this function to select which method to call.
 
-    // See blur() for an example of how to save the image.
+    //TODO - take the rotate amount from the cmd line
     let img = image::open(infile).expect("Failed to open INFILE.");
     let img2 = img.rotate90();
     img2.save(outfile).expect("Failed writing OUTFILE.");
@@ -143,6 +142,10 @@ fn invert(infile: String, outfile: String) {
     // will use the same image to save out to a different file.
 
     // See blur() for an example of how to save the image.
+
+    let mut img = image::open(infile).expect("Failed to open INFILE.");
+    img.invert();
+    img.save(outfile).expect("Failed writing OUTFILE.");
 }
 
 fn grayscale(infile: String, outfile: String) {

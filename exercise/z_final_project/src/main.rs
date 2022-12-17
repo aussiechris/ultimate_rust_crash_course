@@ -136,13 +136,6 @@ fn rotate(infile: String, outfile: String) {
 }
 
 fn invert(infile: String, outfile: String) {
-    // See blur() for an example of how to open an image.
-
-    // .invert() takes no arguments and converts the image in-place, so you
-    // will use the same image to save out to a different file.
-
-    // See blur() for an example of how to save the image.
-
     let mut img = image::open(infile).expect("Failed to open INFILE.");
     img.invert();
     img.save(outfile).expect("Failed writing OUTFILE.");

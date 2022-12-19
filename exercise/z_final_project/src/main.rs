@@ -26,6 +26,7 @@
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
 
 use clap::{Parser, Subcommand};
+use image::DynamicImage;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)] // Read from `Cargo.toml`
@@ -83,43 +84,45 @@ enum Commands {
 fn main() {
     let args = Args::parse();
 
+    // open the image
+    let mut img = image::open(args.infile).expect("Failed to open INFILE.");
+
+    // process the image
+
     match args.command {
-        Commands::Blur { blur_amount } => blur(args.infile, args.outfile, blur_amount),
-        Commands::Brighten { brighten_amount } => {
-            brighten(args.infile, args.outfile, brighten_amount)
-        }
+        Commands::Blur { blur_amount } => img = blur(img, blur_amount),
+        Commands::Brighten { brighten_amount } => img = brighten(img, brighten_amount),
         Commands::Crop {
             x,
             y,
             width,
             height,
-        } => crop(args.infile, args.outfile, x, y, width, height),
-        Commands::Rotate => rotate(args.infile, args.outfile),
-        Commands::Invert => invert(args.infile, args.outfile),
-        Commands::Grayscale => grayscale(args.infile, args.outfile),
-        Commands::Fractal => fractal(args.outfile),
+        } => img = crop(&mut img, x, y, width, height),
+        Commands::Rotate => img = rotate(img),
+        Commands::Invert => invert(&mut img),
+        Commands::Grayscale => img = grayscale(img),
+        Commands::Fractal => img = fractal(),
     }
+
+    // save the image
+    img.save(args.outfile).expect("Failed writing OUTFILE.");
+
+    // img.save(args.outfile).expect("Failed writing OUTFILE.");
 }
 
-fn blur(infile: String, outfile: String, blur_amount: f32) {
-    let img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.blur(blur_amount);
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+fn blur(img: DynamicImage, blur_amount: f32) -> DynamicImage {
+    img.blur(blur_amount)
 }
 
-fn brighten(infile: String, outfile: String, brighten_amount: i32) {
-    let img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.brighten(brighten_amount);
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+fn brighten(img: DynamicImage, brighten_amount: i32) -> DynamicImage {
+    img.brighten(brighten_amount)
 }
 
-fn crop(infile: String, outfile: String, x: u32, y: u32, width: u32, height: u32) {
-    let mut img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.crop(x, y, width, height);
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+fn crop(img: &mut DynamicImage, x: u32, y: u32, width: u32, height: u32) -> DynamicImage {
+    img.crop(x, y, width, height)
 }
 
-fn rotate(infile: String, outfile: String) {
+fn rotate(img: DynamicImage) -> DynamicImage {
     // There are 3 rotate functions to choose from (all clockwise):
     //   .rotate90()
     //   .rotate180()
@@ -130,24 +133,18 @@ fn rotate(infile: String, outfile: String) {
     // through to this function to select which method to call.
 
     //TODO - take the rotate amount from the cmd line
-    let img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.rotate90();
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+    img.rotate90()
 }
 
-fn invert(infile: String, outfile: String) {
-    let mut img = image::open(infile).expect("Failed to open INFILE.");
+fn invert(img: &mut DynamicImage) {
     img.invert();
-    img.save(outfile).expect("Failed writing OUTFILE.");
 }
 
-fn grayscale(infile: String, outfile: String) {
-    let img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.grayscale();
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+fn grayscale(img: DynamicImage) -> DynamicImage {
+    img.grayscale()
 }
 
-fn generate(outfile: String) {
+fn generate(img: &DynamicImage) {
     // Create an ImageBuffer -- see fractal() for an example
 
     // Iterate over the coordinates and pixels of the image -- see fractal() for an example
@@ -163,7 +160,7 @@ fn generate(outfile: String) {
 }
 
 // This code was adapted from https://github.com/PistonDevelopers/image
-fn fractal(outfile: String) {
+fn fractal() -> DynamicImage {
     let width = 800;
     let height = 800;
 
@@ -195,7 +192,7 @@ fn fractal(outfile: String) {
         *pixel = image::Rgb([red, green, blue]);
     }
 
-    imgbuf.save(outfile).unwrap();
+    image::DynamicImage::ImageRgb8(imgbuf)
 }
 
 // **SUPER CHALLENGE FOR LATER** - Let's face it, you don't have time for this during class.

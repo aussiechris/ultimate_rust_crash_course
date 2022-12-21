@@ -25,31 +25,24 @@
 //
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
 
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand, ValueEnum};
 use image::DynamicImage;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)] // Read from `Cargo.toml`
-struct Cli {
+struct Args {
+    ///
+    #[command(subcommand)]
+    command: Commands,
     /// input image file
-    #[arg(value_name = "INPUT_FILE")]
+    // #[arg(value_name = "INPUT_FILE")]
     infile: String,
     /// output image file
-    #[arg(value_name = "OUTPUT_FILE", default_value = "./output.png")]
+    // #[arg(value_name = "OUTPUT_FILE")]
     outfile: String,
-
-    #[arg(value_name = "BLUR_AMOUNT", default_value = "3.0", value_enum)]
-    // #[command(subcommand, value_name = "BLUR_AMOUNT", default_value = "3.0")]
-    blur: Option<BlurCommands>,
 }
 
-#[derive(Clone, ValueEnum)]
-enum BlurCommands {
-    Blur { blur_amount: f32 },
-}
-
-// #[derive(Debug, Args)]
-// #[derive(Subcommand)]
+#[derive(Subcommand)]
 enum Commands {
     /// Blur the image
     Blur {
@@ -79,13 +72,27 @@ enum Commands {
         height: u32,
     },
     /// Rotate the image
-    Rotate,
+    Rotate {
+        /// amount to rotate by
+        #[arg(value_name = "ROTATE_AMOUNT")]
+        rotate_amount: RotateAmount,
+    },
     /// Invert the image
     Invert,
     /// Remove colour from the image
     Grayscale,
     /// Generate a fractal
     Fractal,
+}
+
+#[derive(ValueEnum, Clone)]
+enum RotateAmount {
+    /// rotate 90 degrees
+    Right,
+    /// rotate 180 degrees
+    Flip,
+    /// rotate 270 degrees
+    Left,
 }
 
 fn main() {
@@ -96,20 +103,20 @@ fn main() {
 
     // process the image
 
-    // match args.command {
-    //     Commands::Blur { blur_amount } => img = blur(img, blur_amount),
-    //     Commands::Brighten { brighten_amount } => img = brighten(img, brighten_amount),
-    //     Commands::Crop {
-    //         x,
-    //         y,
-    //         width,
-    //         height,
-    //     } => img = crop(&mut img, x, y, width, height),
-    //     Commands::Rotate => img = rotate(img),
-    //     Commands::Invert => invert(&mut img),
-    //     Commands::Grayscale => img = grayscale(img),
-    //     Commands::Fractal => img = fractal(),
-    // }
+    match args.command {
+        Commands::Blur { blur_amount } => img = blur(img, blur_amount),
+        Commands::Brighten { brighten_amount } => img = brighten(img, brighten_amount),
+        Commands::Crop {
+            x,
+            y,
+            width,
+            height,
+        } => img = crop(&mut img, x, y, width, height),
+        Commands::Rotate { rotate_amount } => img = rotate(img, rotate_amount),
+        Commands::Invert => invert(&mut img),
+        Commands::Grayscale => img = grayscale(img),
+        Commands::Fractal => img = fractal(),
+    }
 
     // save the image
     img.save(args.outfile).expect("Failed writing OUTFILE.");
@@ -129,18 +136,12 @@ fn crop(img: &mut DynamicImage, x: u32, y: u32, width: u32, height: u32) -> Dyna
     img.crop(x, y, width, height)
 }
 
-fn rotate(img: DynamicImage) -> DynamicImage {
-    // There are 3 rotate functions to choose from (all clockwise):
-    //   .rotate90()
-    //   .rotate180()
-    //   .rotate270()
-    // All three methods return a new image.  Pick one and use it!
-
-    // Challenge: parse the rotation amount from the command-line, pass it
-    // through to this function to select which method to call.
-
-    //TODO - take the rotate amount from the cmd line
-    img.rotate90()
+fn rotate(img: DynamicImage, rotate_amount: RotateAmount) -> DynamicImage {
+    match rotate_amount {
+        RotateAmount::Right => img.rotate90(),
+        RotateAmount::Flip => img.rotate180(),
+        RotateAmount::Left => img.rotate270(),
+    }
 }
 
 fn invert(img: &mut DynamicImage) {

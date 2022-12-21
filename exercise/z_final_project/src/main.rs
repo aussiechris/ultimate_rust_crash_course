@@ -25,24 +25,31 @@
 //
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use image::DynamicImage;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)] // Read from `Cargo.toml`
-struct Args {
-    ///
-    #[command(subcommand)]
-    command: Commands,
+struct Cli {
     /// input image file
-    // #[arg(value_name = "INPUT_FILE")]
+    #[arg(value_name = "INPUT_FILE")]
     infile: String,
     /// output image file
-    // #[arg(value_name = "OUTPUT_FILE")]
+    #[arg(value_name = "OUTPUT_FILE", default_value = "./output.png")]
     outfile: String,
+
+    #[arg(value_name = "BLUR_AMOUNT", default_value = "3.0", value_enum)]
+    // #[command(subcommand, value_name = "BLUR_AMOUNT", default_value = "3.0")]
+    blur: Option<BlurCommands>,
 }
 
-#[derive(Subcommand)]
+#[derive(Clone, ValueEnum)]
+enum BlurCommands {
+    Blur { blur_amount: f32 },
+}
+
+// #[derive(Debug, Args)]
+// #[derive(Subcommand)]
 enum Commands {
     /// Blur the image
     Blur {
@@ -89,20 +96,20 @@ fn main() {
 
     // process the image
 
-    match args.command {
-        Commands::Blur { blur_amount } => img = blur(img, blur_amount),
-        Commands::Brighten { brighten_amount } => img = brighten(img, brighten_amount),
-        Commands::Crop {
-            x,
-            y,
-            width,
-            height,
-        } => img = crop(&mut img, x, y, width, height),
-        Commands::Rotate => img = rotate(img),
-        Commands::Invert => invert(&mut img),
-        Commands::Grayscale => img = grayscale(img),
-        Commands::Fractal => img = fractal(),
-    }
+    // match args.command {
+    //     Commands::Blur { blur_amount } => img = blur(img, blur_amount),
+    //     Commands::Brighten { brighten_amount } => img = brighten(img, brighten_amount),
+    //     Commands::Crop {
+    //         x,
+    //         y,
+    //         width,
+    //         height,
+    //     } => img = crop(&mut img, x, y, width, height),
+    //     Commands::Rotate => img = rotate(img),
+    //     Commands::Invert => invert(&mut img),
+    //     Commands::Grayscale => img = grayscale(img),
+    //     Commands::Fractal => img = fractal(),
+    // }
 
     // save the image
     img.save(args.outfile).expect("Failed writing OUTFILE.");

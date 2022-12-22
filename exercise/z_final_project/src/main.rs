@@ -25,6 +25,8 @@
 //
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
 
+use std::u8;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use image::DynamicImage;
 
@@ -81,6 +83,18 @@ enum Commands {
     Invert,
     /// Remove colour from the image
     Grayscale,
+    /// Generate a fun image
+    Generate {
+        /// Amount of Red in generated colour swatch (0-255)
+        #[arg(value_name = "RED_AMOUNT")]
+        red_amount: u8,
+        /// Amount of Green in generated colour swatch (0-255)
+        #[arg(value_name = "GREEN_AMOUNT")]
+        green_amount: u8,
+        /// Amount of Blue in generated colour swatch (0-255)
+        #[arg(value_name = "BLUE_AMOUNT")]
+        blue_amount: u8,
+    },
     /// Generate a fractal
     Fractal,
 }
@@ -102,7 +116,6 @@ fn main() {
     let mut img = image::open(args.infile).expect("Failed to open INFILE.");
 
     // process the image
-
     match args.command {
         Commands::Blur { blur_amount } => img = blur(img, blur_amount),
         Commands::Brighten { brighten_amount } => img = brighten(img, brighten_amount),
@@ -115,27 +128,34 @@ fn main() {
         Commands::Rotate { rotate_amount } => img = rotate(img, rotate_amount),
         Commands::Invert => invert(&mut img),
         Commands::Grayscale => img = grayscale(img),
+        Commands::Generate {
+            red_amount,
+            green_amount,
+            blue_amount,
+        } => img = generate(red_amount, green_amount, blue_amount),
         Commands::Fractal => img = fractal(),
     }
 
     // save the image
     img.save(args.outfile).expect("Failed writing OUTFILE.");
-
-    // img.save(args.outfile).expect("Failed writing OUTFILE.");
 }
 
+/// **Blur** the image by the given amount.
 fn blur(img: DynamicImage, blur_amount: f32) -> DynamicImage {
     img.blur(blur_amount)
 }
 
+/// **Brighten** the image by the given amount.
 fn brighten(img: DynamicImage, brighten_amount: i32) -> DynamicImage {
     img.brighten(brighten_amount)
 }
 
+/// **Crop** the image to a fixed width/height starting at the given x/y position.
 fn crop(img: &mut DynamicImage, x: u32, y: u32, width: u32, height: u32) -> DynamicImage {
     img.crop(x, y, width, height)
 }
 
+/// **Rotate** the image 90 degrees left/right or flip it by rotating 180 degrees.
 fn rotate(img: DynamicImage, rotate_amount: RotateAmount) -> DynamicImage {
     match rotate_amount {
         RotateAmount::Right => img.rotate90(),
@@ -144,30 +164,53 @@ fn rotate(img: DynamicImage, rotate_amount: RotateAmount) -> DynamicImage {
     }
 }
 
+/// **Invert** the image colours (create a negative).
 fn invert(img: &mut DynamicImage) {
     img.invert();
 }
 
+/// Convert image to **Grayscale** by removing all colour.
 fn grayscale(img: DynamicImage) -> DynamicImage {
     img.grayscale()
 }
 
-fn generate(img: &DynamicImage) {
-    // Create an ImageBuffer -- see fractal() for an example
+/// **Generate** a fun image.
+fn generate(red: u8, green: u8, blue: u8) -> DynamicImage {
+    let width = 800;
+    let height = 800;
 
-    // Iterate over the coordinates and pixels of the image -- see fractal() for an example
+    let mut imgbuf = image::ImageBuffer::new(width, height);
 
-    // Set the image to some solid color. -- see fractal() for an example
+    // Iterate over the coordinates and pixels of the image
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        // Generate a pretty fractal and scale by supplied colour values
+        // let r =
+        //     (255 - (0.333 * (x - 20) as f32) as u8) * (255 - (0.333 * (y - 20) as f32) as u8) * red;
+        // let g = ((0.333 * (x - 20) as f32) as u8) * (255 - (0.333 * (y - 20) as f32) as u8) * green;
+        // let b = (255 - (0.333 * (x - 20) as f32) as u8) * ((0.333 * (y - 20) as f32) as u8) * blue;
 
-    // Challenge: parse some color data from the command-line, pass it through
-    // to this function to use for the solid color.
+        // Generate a colour gradient scaled by supplied colour values
+        let y_percent = y as f32 / height as f32;
+        let x_percent = x as f32 / width as f32;
 
-    // Challenge 2: Generate something more interesting!
+        let r = ((255
+            - ((y_percent - x_percent) * 255.0) as u8
+            - ((x_percent - y_percent) * 255.0) as u8) as f32
+            * (red as f32 / 255.0)) as u8;
+        let g = (y_percent * green as f32) as u8;
+        let b = (x_percent * blue as f32) as u8;
 
-    // See blur() for an example of how to save the image
+        *pixel = image::Rgb([r, g, b]);
+
+        // set pixel values for each pixel - simple color swatch
+        // *pixel = image::Rgb([red, green, blue]);
+    }
+
+    image::DynamicImage::ImageRgb8(imgbuf)
 }
 
 // This code was adapted from https://github.com/PistonDevelopers/image
+/// Generate a **fractal** image.
 fn fractal() -> DynamicImage {
     let width = 800;
     let height = 800;
